@@ -1,7 +1,11 @@
 import { useState } from "react";
 import "./Krunker.css";
 
-function Krunker({ onClose }) {
+interface KrunkerProps {
+  onClose: () => void;
+}
+
+function Krunker({ onClose }: KrunkerProps) {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
 

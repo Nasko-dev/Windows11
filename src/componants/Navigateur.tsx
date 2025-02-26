@@ -1,7 +1,11 @@
 import { useState } from "react";
 import "./Navigateur.css";
 
-function Navigateur({ onClose }) {
+interface NavigateurProps {
+  onClose: () => void;
+}
+
+function Navigateur({ onClose }: NavigateurProps) {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
 

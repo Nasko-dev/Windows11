@@ -1,22 +1,44 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import "./Acceil.css";
 import img1 from "../assets/ne6ukkej06t71.png";
 import searchIcon from "../assets/shearch.png";
-import svg1 from "../assets/bureaux.svg";
+// import svg1 from "../assets/bureaux.svg"; // Suppression de l'import inutilisé
 import svg2 from "../assets/folder.svg";
 import img2 from "../assets/edge.png";
 import img3 from "../assets/vscode.png";
 import img4 from "../assets/Krunker.png";
-import Navigateur from "./Navigateur"; // Importation du composant Navigateur
+import Navigateur from "./Navigateur";
 import Krunker from "./Krunker";
+
+interface ISelectionBox {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+}
+
+interface AppData {
+  name: string;
+  url: string;
+}
+
+interface IconType {
+  id: number;
+  name: string;
+  x: number;
+  y: number;
+  icon: string;
+}
 
 function Acceil() {
   const [currentTime, setCurrentTime] = useState({ date: "", time: "" });
-  const [selectedApp, setSelectedApp] = useState(null);
-  const [selectionBox, setSelectionBox] = useState(null);
+  // L'état selectedApp peut être soit une chaîne (pour "Navigateur" ou "Krunker"),
+  // soit un objet contenant { name, url }, soit null.
+  const [selectedApp, setSelectedApp] = useState<string | AppData | null>(null);
+  const [selectionBox, setSelectionBox] = useState<ISelectionBox | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
 
-  const [icons, setIcons] = useState([
+  const [icons, setIcons] = useState<IconType[]>([
     { id: 1, name: "Dossier", x: 10, y: 50, icon: svg2 },
     { id: 2, name: "Navigateur", x: 10, y: 150, icon: img2 },
     { id: 3, name: "VS Code", x: 10, y: 250, icon: img3 },
@@ -41,9 +63,10 @@ function Acceil() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleDoubleClick = (name) => {
+  const handleDoubleClick = (name: string) => {
     if (name === "Navigateur" || name === "Krunker") {
-      setSelectedApp(name); // Ouvre l'application comme une fenêtre
+      // Ouvre l'application dans une fenêtre interne
+      setSelectedApp(name);
     } else {
       let url = "";
       if (name === "VS Code") {
@@ -51,23 +74,20 @@ function Acceil() {
       } else if (name === "Dossier") {
         url = "https://www.github.com";
       }
-
-      setSelectedApp({ name, url }); // Ouvre dans un nouvel onglet
+      // Ouvre dans un nouvel onglet
+      setSelectedApp({ name, url });
     }
   };
 
-  const closeApp = () => {
-    setSelectedApp(null);
-  };
-
-  const handleDragStart = (e, id) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, id: number) => {
     const icon = icons.find((icon) => icon.id === id);
-    e.dataTransfer.setData("iconId", id);
-    e.dataTransfer.setData("offsetX", e.clientX - icon.x);
-    e.dataTransfer.setData("offsetY", e.clientY - icon.y);
+    if (!icon) return;
+    e.dataTransfer.setData("iconId", id.toString());
+    e.dataTransfer.setData("offsetX", (e.clientX - icon.x).toString());
+    e.dataTransfer.setData("offsetY", (e.clientY - icon.y).toString());
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const id = parseInt(e.dataTransfer.getData("iconId"), 10);
     const offsetX = parseInt(e.dataTransfer.getData("offsetX"), 10);
@@ -85,7 +105,7 @@ function Acceil() {
     );
   };
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (e.target === e.currentTarget) {
       setIsSelecting(true);
       const startX = e.clientX;
@@ -94,19 +114,18 @@ function Acceil() {
     }
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (!isSelecting || !selectionBox) return;
-
-    setSelectionBox((prev) => ({
-      ...prev,
+    setSelectionBox({
+      ...selectionBox,
       endX: e.clientX,
       endY: e.clientY,
-    }));
+    });
   };
 
   const handleMouseUp = () => {
     setIsSelecting(false);
-    setSelectionBox(null); // Supprime le rectangle bleu après le relâchement du clic
+    setSelectionBox(null);
   };
 
   return (
@@ -134,8 +153,7 @@ function Acceil() {
               className="search-input"
             />
           </li>
-
-          {/* Affichage uniquement des 3 premières icônes dans la navigation */}
+          {/* Affichage des 3 premières icônes dans la navigation */}
           {icons.slice(0, 3).map((icon) => (
             <li
               key={icon.id}
@@ -171,7 +189,7 @@ function Acceil() {
         </div>
       ))}
 
-      {/* Rectangle de sélection qui suit la direction de la souris */}
+      {/* Rectangle de sélection */}
       {selectionBox && isSelecting && (
         <div
           className="selection-box"
@@ -188,12 +206,22 @@ function Acceil() {
       )}
 
       {/* Affichage de l'application ouverte */}
-      {/* Affichage de l'application ouverte */}
       {selectedApp === "Navigateur" && (
         <Navigateur onClose={() => setSelectedApp(null)} />
       )}
       {selectedApp === "Krunker" && (
         <Krunker onClose={() => setSelectedApp(null)} />
+      )}
+      {/* Si selectedApp est un objet (avec url), redirigez via un lien caché */}
+      {selectedApp && typeof selectedApp === "object" && selectedApp.url && (
+        <a
+          href={selectedApp.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: "none" }}
+        >
+          Open
+        </a>
       )}
     </div>
   );
